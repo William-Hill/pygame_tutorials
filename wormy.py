@@ -31,9 +31,6 @@ RIGHT = 'right'
 
 HEAD = 0 # syntactic sugar: index of the worm's head
 
-def main():
-    pass
-
 
 def runGame():
     # Set a random start point.
@@ -176,6 +173,9 @@ def drawApple(coord):
 
 
 def drawGrid():
+    pass
+
+def main():
     pass
 
 
