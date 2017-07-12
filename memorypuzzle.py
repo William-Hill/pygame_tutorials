@@ -45,9 +45,6 @@ ALLCOLORS = (RED, GREEN, BLUE, YELLOW, ORANGE, PURPLE, CYAN)
 ALLSHAPES = (DONUT, SQUARE, DIAMOND, LINES, OVAL)
 assert len(ALLCOLORS) * len(ALLSHAPES) * 2 >= BOARDWIDTH * BOARDHEIGHT, "Board is too big for the number of shapes/colors defined."
 
-def main():
-    pass
-
 
 def generateRevealedBoxesData(val):
     revealedBoxes = []
@@ -158,9 +155,6 @@ def coverBoxesAnimation(board, boxesToCover):
         drawBoxCovers(board, boxesToCover, coverage)
 
 
-def drawBoard(board, revealed):
-    pass
-
 
 def drawHighlightBox(boxx, boxy):
     left, top = leftTopCoordsOfBox(boxx, boxy)
@@ -204,6 +198,11 @@ def hasWon(revealedBoxes):
             return False # return False if any boxes are covered.
     return True
 
+def drawBoard(board, revealed):
+    pass
+
+def main():
+    pass
 
 if __name__ == '__main__':
     main()
