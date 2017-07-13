@@ -47,6 +47,8 @@ assert len(ALLCOLORS) * len(ALLSHAPES) * 2 >= BOARDWIDTH * BOARDHEIGHT, "Board i
 
 
 def generateRevealedBoxesData(val):
+    #Creates a list of lists that keeps tracks of which boxes have been revealed
+    #Takes in a Boolean as the val
     revealedBoxes = []
     for i in range(BOARDWIDTH):
         revealedBoxes.append([val] * BOARDHEIGHT)
