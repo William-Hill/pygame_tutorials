@@ -5,8 +5,11 @@
 
 import random, pygame, sys
 from pygame.locals import *
+import pickle
+import os
 
-FPS = 15
+START_SCREEN_FPS = 15
+FPS = 10
 WINDOWWIDTH = 640
 WINDOWHEIGHT = 480
 CELLSIZE = 20
@@ -30,9 +33,10 @@ LEFT = 'left'
 RIGHT = 'right'
 
 HEAD = 0 # syntactic sugar: index of the worm's head
+level_up = False
 
 def main():
-    global FPSCLOCK, DISPLAYSURF, BASICFONT
+    global FPSCLOCK, DISPLAYSURF, BASICFONT, level_up
 
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
@@ -43,16 +47,39 @@ def main():
     showStartScreen()
     while True:
         runGame()
-        showGameOverScreen()
+        if level_up:
+            showNextLevelScreen()
+        else:
+            showGameOverScreen()
+
+def load_wormy_state(temp_wormCoords, startx, starty, next_level):
+    if len(temp_wormCoords) > 3 and next_level:
+         wormCoords = [{'x': startx, 'y': starty}]
+         for i in range(1,len(temp_wormCoords)+1):
+             wormCoords.append({'x': startx - i, 'y': starty})
+         return wormCoords
+    else:
+        return [{'x': startx, 'y': starty},
+                      {'x': startx - 1, 'y': starty},
+                      {'x': startx - 2, 'y': starty}]
 
 
 def runGame():
     # Set a random start point.
+    global level_up
     startx = random.randint(5, CELLWIDTH - 6)
     starty = random.randint(5, CELLHEIGHT - 6)
-    wormCoords = [{'x': startx,     'y': starty},
-                  {'x': startx - 1, 'y': starty},
-                  {'x': startx - 2, 'y': starty}]
+    try:
+        with open ('worm_state.txt', 'rb') as wormy_state:
+            temp_wormCoords = pickle.load(wormy_state)
+        wormCoords = load_wormy_state(temp_wormCoords, startx, starty, level_up)
+        next_level = False
+    except FileNotFoundError as error:
+        print("error:", error)
+        wormCoords = [{'x': startx,     'y': starty},
+                      {'x': startx - 1, 'y': starty},
+                      {'x': startx - 2, 'y': starty}]
+        next_level = False
     direction = RIGHT
 
     # Start the apple in a random place.
@@ -76,14 +103,30 @@ def runGame():
 
         # check if the worm has hit itself or the edge
         if wormCoords[HEAD]['x'] == -1 or wormCoords[HEAD]['x'] == CELLWIDTH or wormCoords[HEAD]['y'] == -1 or wormCoords[HEAD]['y'] == CELLHEIGHT:
+            next_level = False
+            level_up = False
+            try:
+                os.remove("worm_state.txt")
+            except FileNotFoundError as error:
+                print("error:", error)
             return # game over
         for wormBody in wormCoords[1:]:
             if wormBody['x'] == wormCoords[HEAD]['x'] and wormBody['y'] == wormCoords[HEAD]['y']:
+                next_level = False
+                level_up = False
+                try:
+                    os.remove("worm_state.txt")
+                except FileNotFoundError as error:
+                    print("error:", error)
                 return # game over
 
-        # check if worm has eaten an apply
+        # check if worm has eaten an apple
         if wormCoords[HEAD]['x'] == apple['x'] and wormCoords[HEAD]['y'] == apple['y']:
             # don't remove worm's tail segment
+            with open('worm_state.txt', 'wb') as fp:
+                pickle.dump(wormCoords, fp)
+            next_level = True
+            level_up = True
             apple = getRandomLocation() # set a new apple somewhere
         else:
             del wormCoords[-1] # remove worm's tail segment
@@ -104,6 +147,12 @@ def runGame():
         drawApple(apple)
         drawScore(len(wormCoords) - 3)
         pygame.display.update()
+        if (len(wormCoords) - 3) > 0 and (len(wormCoords) - 3) % 2 == 0 and next_level:
+            global FPS
+            FPS += 2
+            print("FPS:", FPS)
+            level_up = True
+            return
         FPSCLOCK.tick(FPS)
 
 def drawPressKeyMsg():
@@ -150,7 +199,7 @@ def showStartScreen():
             pygame.event.get() # clear event queue
             return
         pygame.display.update()
-        FPSCLOCK.tick(FPS)
+        FPSCLOCK.tick(START_SCREEN_FPS)
         degrees1 += 3 # rotate by 3 degrees each frame
         degrees2 += 7 # rotate by 7 degrees each frame
 
@@ -163,8 +212,30 @@ def terminate():
 def getRandomLocation():
     return {'x': random.randint(0, CELLWIDTH - 1), 'y': random.randint(0, CELLHEIGHT - 1)}
 
+def showNextLevelScreen():
+    gameOverFont = pygame.font.Font('freesansbold.ttf', 150)
+    gameSurf = gameOverFont.render('Next', True, WHITE)
+    overSurf = gameOverFont.render('Level', True, WHITE)
+    gameRect = gameSurf.get_rect()
+    overRect = overSurf.get_rect()
+    gameRect.midtop = (WINDOWWIDTH / 2, 10)
+    overRect.midtop = (WINDOWWIDTH / 2, gameRect.height + 10 + 25)
+    DISPLAYSURF.blit(gameSurf, gameRect)
+    DISPLAYSURF.blit(overSurf, overRect)
+    drawPressKeyMsg()
+    pygame.display.update()
+    pygame.time.wait(500)
+    checkForKeyPress() # clear out any key presses in the event queue
+
+    while True:
+        if checkForKeyPress():
+            pygame.event.get() # clear event queue
+            return
+
 
 def showGameOverScreen():
+    global FPS
+    FPS = 10
     gameOverFont = pygame.font.Font('freesansbold.ttf', 150)
     gameSurf = gameOverFont.render('Game', True, WHITE)
     overSurf = gameOverFont.render('Over', True, WHITE)
@@ -179,6 +250,7 @@ def showGameOverScreen():
     pygame.display.update()
     pygame.time.wait(500)
     checkForKeyPress() # clear out any key presses in the event queue
+    # worm_state.close()
 
     while True:
         if checkForKeyPress():
