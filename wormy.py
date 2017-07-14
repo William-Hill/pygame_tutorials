@@ -7,10 +7,8 @@ import random, pygame, sys
 from pygame.locals import *
 
 ''' import pickle and os modules '''
-import pickle
-import os
 
-''' modify fps global values '''
+
 START_SCREEN_FPS = 15
 fps = 10
 
@@ -38,18 +36,13 @@ RIGHT = 'right'
 
 HEAD = 0 # syntactic sugar: index of the worm's head
 
-#TODO: Add high score tracking
-#TODO: Add italics to new code when getting it printed
 
 ''' Add level tracking global variables '''
-level_up = False
-level_number = 1
 
 def main():
     global FPSCLOCK, DISPLAYSURF, BASICFONT
 
     ''' Reference global variables: level_up and level_number '''
-    global level_up, level_number
 
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
@@ -62,10 +55,7 @@ def main():
         runGame()
 
         ''' Check if we should show the next level screen or the game over screen '''
-        if level_up:
-            showNextLevelScreen(level_number)
-        else:
-            showGameOverScreen()
+        showGameOverScreen()
 
 def load_wormy_state(temp_wormCoords, startx, starty, next_level):
     if len(temp_wormCoords) > 3 and next_level:
@@ -79,44 +69,27 @@ def load_wormy_state(temp_wormCoords, startx, starty, next_level):
                       {'x': startx - 2, 'y': starty}]
 
 def delete_wormy_state():
-    try:
-        os.remove("worm_state.txt")
-    except FileNotFoundError as error:
-        print("error:", error)
+    pass
 
 def move_to_next_level(wormCoords, level_up):
-    if (len(wormCoords) - 3) > 0 and (len(wormCoords) - 3) % 2 == 0 and level_up:
-        global fps
-        fps += 2
-        print("fps:", fps)
-        return True
+    pass
 
 def initialize_wormy(startx, starty, level_up):
-    try:
-        with open('worm_state.txt', 'rb') as wormy_state:
-            temp_wormCoords = pickle.load(wormy_state)
-        wormCoords = load_wormy_state(temp_wormCoords, startx, starty, level_up)
-    except FileNotFoundError as error:
-        wormCoords = [{'x': startx,     'y': starty},
-                      {'x': startx - 1, 'y': starty},
-                      {'x': startx - 2, 'y': starty}]
-    return wormCoords
+    pass
 
 def runGame():
 
     '''Reference global variables: level_up and level_number'''
-    global level_up
-    global level_number
 
     # Set a random start point.
     startx = random.randint(5, CELLWIDTH - 6)
     starty = random.randint(5, CELLHEIGHT - 6)
 
     '''Initialize Wormy'''
-    wormCoords = initialize_wormy(startx, starty, level_up)
+
 
     '''Set level_up to False'''
-    level_up = False
+
 
 
     direction = RIGHT
@@ -143,16 +116,14 @@ def runGame():
         if wormCoords[HEAD]['x'] == -1 or wormCoords[HEAD]['x'] == CELLWIDTH or wormCoords[HEAD]['y'] == -1 or wormCoords[HEAD]['y'] == CELLHEIGHT:
 
             ''' Set level_up to False and Delete Wormy State '''
-            level_up = False
-            delete_wormy_state()
+
 
             return # game over
         for wormBody in wormCoords[1:]:
             if wormBody['x'] == wormCoords[HEAD]['x'] and wormBody['y'] == wormCoords[HEAD]['y']:
 
                 ''' Set level_up to False and Delete Wormy State '''
-                level_up = False
-                delete_wormy_state()
+
 
                 return # game over
 
@@ -161,9 +132,7 @@ def runGame():
             # don't remove worm's tail segment
 
             '''Pickle Wormy's state to the file; Set level_up to True '''
-            with open('worm_state.txt', 'wb') as wormy_state:
-                pickle.dump(wormCoords, wormy_state)
-            level_up = True
+
 
             apple = getRandomLocation() # set a new apple somewhere
         else:
@@ -187,9 +156,7 @@ def runGame():
         pygame.display.update()
 
         '''Check if we should move to the next level '''
-        if move_to_next_level(wormCoords, level_up):
-            level_number +=1
-            return
+
 
 
         FPSCLOCK.tick(fps)
@@ -276,10 +243,7 @@ def showNextLevelScreen(level_number):
 def showGameOverScreen():
 
     ''' Reset the global variables fps and level_number to original values '''
-    global fps
-    global level_number
-    fps = 10
-    level_number = 1
+    
 
     gameOverFont = pygame.font.Font('freesansbold.ttf', 150)
     gameSurf = gameOverFont.render('Game', True, WHITE)
