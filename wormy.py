@@ -5,6 +5,7 @@
 
 import random, pygame, sys
 from pygame.locals import *
+
 import pickle
 import os
 
@@ -33,6 +34,10 @@ LEFT = 'left'
 RIGHT = 'right'
 
 HEAD = 0 # syntactic sugar: index of the worm's head
+
+#TODO: Add high score tracking
+#TODO: Add level number output
+
 level_up = False
 
 def main():
@@ -47,6 +52,7 @@ def main():
     showStartScreen()
     while True:
         runGame()
+
         if level_up:
             showNextLevelScreen()
         else:
