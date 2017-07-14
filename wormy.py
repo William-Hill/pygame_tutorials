@@ -36,12 +36,13 @@ RIGHT = 'right'
 HEAD = 0 # syntactic sugar: index of the worm's head
 
 #TODO: Add high score tracking
-#TODO: Add level number output
+#TODO: Add italics to new code when getting it printed
 
 level_up = False
+level_number = 1
 
 def main():
-    global FPSCLOCK, DISPLAYSURF, BASICFONT, level_up
+    global FPSCLOCK, DISPLAYSURF, BASICFONT, level_up, level_number
 
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
@@ -54,7 +55,7 @@ def main():
         runGame()
 
         if level_up:
-            showNextLevelScreen()
+            showNextLevelScreen(level_number)
         else:
             showGameOverScreen()
 
@@ -83,8 +84,11 @@ def move_to_next_level(wormCoords, level_up):
         return True
 
 def runGame():
-    # Set a random start point.
+
     global level_up
+    global level_number
+
+    # Set a random start point.
     startx = random.randint(5, CELLWIDTH - 6)
     starty = random.randint(5, CELLHEIGHT - 6)
 
@@ -161,7 +165,10 @@ def runGame():
         pygame.display.update()
 
         if move_to_next_level(wormCoords, level_up):
+            level_number +=1
             return
+
+
         FPSCLOCK.tick(FPS)
 
 def drawPressKeyMsg():
@@ -221,16 +228,17 @@ def terminate():
 def getRandomLocation():
     return {'x': random.randint(0, CELLWIDTH - 1), 'y': random.randint(0, CELLHEIGHT - 1)}
 
-def showNextLevelScreen():
+
+def showNextLevelScreen(level_number):
     showNextLevelFont = pygame.font.Font('freesansbold.ttf', 150)
-    nextSurf = showNextLevelFont.render('Next', True, WHITE)
     levelSurf = showNextLevelFont.render('Level', True, WHITE)
-    nextRect = nextSurf.get_rect()
+    levelNumberSurf = showNextLevelFont.render(str(level_number), True, WHITE)
     levelRect = levelSurf.get_rect()
-    nextRect.midtop = (WINDOWWIDTH / 2, 10)
-    levelRect.midtop = (WINDOWWIDTH / 2, nextRect.height + 10 + 25)
-    DISPLAYSURF.blit(nextSurf, nextRect)
+    levelNumberRect = levelNumberSurf.get_rect()
+    levelRect.midtop = (WINDOWWIDTH / 2, 10)
+    levelNumberRect.midtop = (WINDOWWIDTH / 2, levelRect.height + 10 + 25)
     DISPLAYSURF.blit(levelSurf, levelRect)
+    DISPLAYSURF.blit(levelNumberSurf, levelNumberRect)
     drawPressKeyMsg()
     pygame.display.update()
     pygame.time.wait(500)
@@ -244,7 +252,10 @@ def showNextLevelScreen():
 
 def showGameOverScreen():
     global FPS
+    global level_number
     FPS = 10
+    level_number = 1
+
     gameOverFont = pygame.font.Font('freesansbold.ttf', 150)
     gameSurf = gameOverFont.render('Game', True, WHITE)
     overSurf = gameOverFont.render('Over', True, WHITE)
@@ -259,7 +270,6 @@ def showGameOverScreen():
     pygame.display.update()
     pygame.time.wait(500)
     checkForKeyPress() # clear out any key presses in the event queue
-    # worm_state.close()
 
     while True:
         if checkForKeyPress():
