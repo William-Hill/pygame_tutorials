@@ -63,25 +63,38 @@ def load_wormy_state(temp_wormCoords, startx, starty, next_level):
                       {'x': startx - 1, 'y': starty},
                       {'x': startx - 2, 'y': starty}]
 
+def delete_wormy_state():
+    try:
+        os.remove("worm_state.txt")
+    except FileNotFoundError as error:
+        print("error:", error)
+
+def move_to_next_level(wormCoords, level_up):
+    if (len(wormCoords) - 3) > 0 and (len(wormCoords) - 3) % 2 == 0 and level_up:
+        global FPS
+        FPS += 2
+        print("FPS:", FPS)
+        return True
 
 def runGame():
     # Set a random start point.
     global level_up
     startx = random.randint(5, CELLWIDTH - 6)
     starty = random.randint(5, CELLHEIGHT - 6)
+
     try:
-        with open ('worm_state.txt', 'rb') as wormy_state:
+        with open('worm_state.txt', 'rb') as wormy_state:
             temp_wormCoords = pickle.load(wormy_state)
         wormCoords = load_wormy_state(temp_wormCoords, startx, starty, level_up)
-        next_level = False
     except FileNotFoundError as error:
         print("error:", error)
         wormCoords = [{'x': startx,     'y': starty},
                       {'x': startx - 1, 'y': starty},
                       {'x': startx - 2, 'y': starty}]
-        next_level = False
-    direction = RIGHT
+    level_up = False
 
+
+    direction = RIGHT
     # Start the apple in a random place.
     apple = getRandomLocation()
 
@@ -103,30 +116,23 @@ def runGame():
 
         # check if the worm has hit itself or the edge
         if wormCoords[HEAD]['x'] == -1 or wormCoords[HEAD]['x'] == CELLWIDTH or wormCoords[HEAD]['y'] == -1 or wormCoords[HEAD]['y'] == CELLHEIGHT:
-            next_level = False
             level_up = False
-            try:
-                os.remove("worm_state.txt")
-            except FileNotFoundError as error:
-                print("error:", error)
+            delete_wormy_state()
             return # game over
         for wormBody in wormCoords[1:]:
             if wormBody['x'] == wormCoords[HEAD]['x'] and wormBody['y'] == wormCoords[HEAD]['y']:
-                next_level = False
                 level_up = False
-                try:
-                    os.remove("worm_state.txt")
-                except FileNotFoundError as error:
-                    print("error:", error)
+                delete_wormy_state()
                 return # game over
 
         # check if worm has eaten an apple
         if wormCoords[HEAD]['x'] == apple['x'] and wormCoords[HEAD]['y'] == apple['y']:
             # don't remove worm's tail segment
-            with open('worm_state.txt', 'wb') as fp:
-                pickle.dump(wormCoords, fp)
-            next_level = True
+
+            with open('worm_state.txt', 'wb') as wormy_state:
+                pickle.dump(wormCoords, wormy_state)
             level_up = True
+
             apple = getRandomLocation() # set a new apple somewhere
         else:
             del wormCoords[-1] # remove worm's tail segment
@@ -147,11 +153,8 @@ def runGame():
         drawApple(apple)
         drawScore(len(wormCoords) - 3)
         pygame.display.update()
-        if (len(wormCoords) - 3) > 0 and (len(wormCoords) - 3) % 2 == 0 and next_level:
-            global FPS
-            FPS += 2
-            print("FPS:", FPS)
-            level_up = True
+
+        if move_to_next_level(wormCoords, level_up):
             return
         FPSCLOCK.tick(FPS)
 
@@ -213,15 +216,15 @@ def getRandomLocation():
     return {'x': random.randint(0, CELLWIDTH - 1), 'y': random.randint(0, CELLHEIGHT - 1)}
 
 def showNextLevelScreen():
-    gameOverFont = pygame.font.Font('freesansbold.ttf', 150)
-    gameSurf = gameOverFont.render('Next', True, WHITE)
-    overSurf = gameOverFont.render('Level', True, WHITE)
-    gameRect = gameSurf.get_rect()
-    overRect = overSurf.get_rect()
-    gameRect.midtop = (WINDOWWIDTH / 2, 10)
-    overRect.midtop = (WINDOWWIDTH / 2, gameRect.height + 10 + 25)
-    DISPLAYSURF.blit(gameSurf, gameRect)
-    DISPLAYSURF.blit(overSurf, overRect)
+    showNextLevelFont = pygame.font.Font('freesansbold.ttf', 150)
+    nextSurf = showNextLevelFont.render('Next', True, WHITE)
+    levelSurf = showNextLevelFont.render('Level', True, WHITE)
+    nextRect = nextSurf.get_rect()
+    levelRect = levelSurf.get_rect()
+    nextRect.midtop = (WINDOWWIDTH / 2, 10)
+    levelRect.midtop = (WINDOWWIDTH / 2, nextRect.height + 10 + 25)
+    DISPLAYSURF.blit(nextSurf, nextRect)
+    DISPLAYSURF.blit(levelSurf, levelRect)
     drawPressKeyMsg()
     pygame.display.update()
     pygame.time.wait(500)
